@@ -24,6 +24,8 @@ typedef struct {
 	GstElement *qtmux;
 	GstElement *sink;
 
+	GstElement *convert;
+
 	GstClockTime timestamp;
 	guint sourceid;
 } gst_app_t;

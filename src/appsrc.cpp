@@ -61,18 +61,20 @@ int gstInit()
 	app->parser =   gst_element_factory_make("h264parse"  , "myparser");
 	app->qtmux =    gst_element_factory_make("qtmux"      , "mymux");
 	app->sink =     gst_element_factory_make ("filesink"  , NULL);
+	app->convert =  gst_element_factory_make("nvvidconv", "myconvert");
 
 	if(	!app->pipeline ||
 		!app->src      || !app->filter1 ||
 		!app->encoder  || !app->filter2 ||
 		!app->parser   || !app->qtmux    ||
-		!app->sink    )  {
+		!app->sink     || !app->convert )  {
 		printf("Error creating pipeline elements!\n");
 		exit(2);
 	}
 
 	gst_bin_add_many (GST_BIN(app->pipeline),
-			(GstElement*)app->src,app->filter1,
+			(GstElement*)app->src,
+			app->filter1,app->convert,
 			app->encoder,app->filter2,
 			app->parser,app->qtmux,
 			app->sink, NULL);
@@ -81,22 +83,31 @@ int gstInit()
 	//Set pipeline element attributes
 	g_object_set (app->src, "format", GST_FORMAT_TIME, NULL);
 	GstCaps *filtercaps1 = gst_caps_new_simple ("video/x-raw",
-		"format", G_TYPE_STRING, "YUYV",
+		"format", G_TYPE_STRING, "YUY2",
 		"width", G_TYPE_INT, 1920*2,
 		"height", G_TYPE_INT, 1080,
 		"framerate", GST_TYPE_FRACTION, 30, 1,
 		NULL);
 	g_object_set (G_OBJECT (app->filter1), "caps", filtercaps1, NULL);
+
+
 	GstCaps *filtercaps2 = gst_caps_new_simple ("video/x-h264",
 		"stream-format", G_TYPE_STRING, "byte-stream",
 		NULL);
 	g_object_set (G_OBJECT (app->filter2), "caps", filtercaps2, NULL);
 	g_object_set (G_OBJECT (app->sink), "location", "/home/nvidia/output.h264", NULL);
 
+
+//	GstCaps *convertcaps = gst_caps_new_simple ("video/x-raw(memory:NVMM)",
+//		"format", G_TYPE_STRING, "I420",NULL);
+//	g_object_set(G_OBJECT(app->convert),"caps",convertcaps , NULL);
+
+
 	//Link elements together
 	g_assert( gst_element_link_many(
 		(GstElement*)app->src,
 		app->filter1,
+		app->convert,
 		app->encoder,
 		app->filter2,
 		app->parser,
@@ -106,7 +117,7 @@ int gstInit()
 
 	//Play the pipeline
 	state_ret = gst_element_set_state((GstElement*)app->pipeline, GST_STATE_PLAYING);
-	g_assert(state_ret == GST_STATE_CHANGE_SUCCESS);
+	g_assert(state_ret == GST_STATE_CHANGE_ASYNC);
 
 
 	return 0;

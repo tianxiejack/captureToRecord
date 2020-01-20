@@ -69,7 +69,7 @@ int callback(void *handle, int chId, int virchId, Mat frame)
 void* recordVideo(void *)
 {
 	std::string video_name = "recordDualFrame.avi";
-	VideoWriter writer = VideoWriter(video_name, CV_FOURCC('X', '2', '6', '4'), 15, Size(1920*2,1080));
+	VideoWriter writer = VideoWriter(video_name, CV_FOURCC('X', '2', '6', '4'), 15, Size(1920*2,1080),1);
 
 	Mat colorframe;
 	Mat grayframe;
@@ -78,12 +78,13 @@ void* recordVideo(void *)
 	{
 		OSA_semWait(&semRecord, 10*1000);
 		//cvtColor(gFullMat, grayframe, CV_YUV2GRAY_UYVY);
-		//cvtColor(gFullMat, colorframe, CV_YUV2BGR_YUYV);
+		cvtColor(gFullMat, colorframe, CV_YUV2BGR_YUYV);
+
 		time = OSA_getCurTimeInMsec();
 		//imshow("111" , colorframe);
 		//waitKey(1);
 		pushData(gFullMat);
-		//writer.write(colorframe);
+		writer.write(colorframe);
 		printf("write frame need time : %u \n" , OSA_getCurTimeInMsec() - time);
 	}
 	writer.release();
