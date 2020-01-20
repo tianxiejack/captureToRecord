@@ -56,9 +56,9 @@ int gstInit()
 	app->pipeline = (GstPipeline*)gst_pipeline_new("mypipeline");
 	app->src    =   (GstAppSrc*)gst_element_factory_make("appsrc", "mysrc");
 	app->filter1 =  gst_element_factory_make ("capsfilter", "myfilter1");
-	app->encoder =  gst_element_factory_make ("omxh265enc", "myomx");
+	app->encoder =  gst_element_factory_make ("omxh264enc", "myomx");
 	app->filter2 =  gst_element_factory_make ("capsfilter", "myfilter2");
-	app->parser =   gst_element_factory_make("h265parse"  , "myparser");
+	app->parser =   gst_element_factory_make("h264parse"  , "myparser");
 	app->qtmux =    gst_element_factory_make("qtmux"      , "mymux");
 	app->sink =     gst_element_factory_make ("filesink"  , NULL);
 
@@ -70,6 +70,13 @@ int gstInit()
 		printf("Error creating pipeline elements!\n");
 		exit(2);
 	}
+
+	gst_bin_add_many (GST_BIN(app->pipeline),
+			(GstElement*)app->src,app->filter1,
+			app->encoder,app->filter2,
+			app->parser,app->qtmux,
+			app->sink, NULL);
+
 
 	//Set pipeline element attributes
 	g_object_set (app->src, "format", GST_FORMAT_TIME, NULL);
@@ -84,16 +91,16 @@ int gstInit()
 		"stream-format", G_TYPE_STRING, "byte-stream",
 		NULL);
 	g_object_set (G_OBJECT (app->filter2), "caps", filtercaps2, NULL);
-	g_object_set (G_OBJECT (app->sink), "location", "output.h265", NULL);
+	g_object_set (G_OBJECT (app->sink), "location", "/home/nvidia/output.h264", NULL);
 
 	//Link elements together
 	g_assert( gst_element_link_many(
 		(GstElement*)app->src,
-		//app->filter1,
+		app->filter1,
 		app->encoder,
-		//app->filter2,
-		//app->parser,
-		//app->qtmux,
+		app->filter2,
+		app->parser,
+		app->qtmux,
 		app->sink,
 		NULL ) );
 
