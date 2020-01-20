@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include "osa_thr.h"
 #include "osa_sem.h"
+#include "appsrc.h"
+
 
 Mat gFullMat;
 Mat gLeftMat;
@@ -76,11 +78,12 @@ void* recordVideo(void *)
 	{
 		OSA_semWait(&semRecord, 10*1000);
 		//cvtColor(gFullMat, grayframe, CV_YUV2GRAY_UYVY);
-		cvtColor(gFullMat, colorframe, CV_YUV2BGR_YUYV);
+		//cvtColor(gFullMat, colorframe, CV_YUV2BGR_YUYV);
 		time = OSA_getCurTimeInMsec();
 		//imshow("111" , colorframe);
 		//waitKey(1);
-		writer.write(colorframe);
+		pushData(gFullMat);
+		//writer.write(colorframe);
 		printf("write frame need time : %u \n" , OSA_getCurTimeInMsec() - time);
 	}
 	writer.release();
@@ -101,6 +104,8 @@ int main()
 	gFullMat = Mat(1080,1920*2,CV_8UC2);
 	gLeftMat = gFullMat(Rect(0,0,1920,1080));
 	gRightMat = gFullMat(Rect(1920,0,1920,1080));
+
+	gstInit();
 
 	MultiChVideo cap;
 	cap.m_usrFunc = callback;
