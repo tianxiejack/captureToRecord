@@ -13,6 +13,7 @@
 #include <gst/app/gstappsrc.h>
 
 #include <opencv2/opencv.hpp>
+#include "osa_buf.h"
 
 typedef struct {
 	GstPipeline *pipeline;

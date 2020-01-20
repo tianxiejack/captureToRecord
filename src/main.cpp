@@ -83,8 +83,8 @@ void* recordVideo(void *)
 		time = OSA_getCurTimeInMsec();
 		//imshow("111" , colorframe);
 		//waitKey(1);
-		pushData(gFullMat);
-		writer.write(colorframe);
+		//pushData(gFullMat);
+		//writer.write(colorframe);
 		printf("write frame need time : %u \n" , OSA_getCurTimeInMsec() - time);
 	}
 	writer.release();

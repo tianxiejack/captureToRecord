@@ -12,8 +12,14 @@ static gst_app_t gst_app;
 
 using namespace cv;
 
+//OSA_BufHndl gBufhandle;
+
+extern Mat gFullMat;
+
 void pushData(Mat inFrame)
 {
+
+	return ;
 	gst_app_t *app = &gst_app;
 
 	//Push the data from buffer to gstpipeline 100 times
@@ -43,9 +49,59 @@ void pushData(Mat inFrame)
 	return ;
 }
 
+static void cb_need_data (GstElement *appsrc,guint unused_size,gpointer user_data)
+{
+	  static gboolean white = FALSE;
+	  static GstClockTime timestamp = 0;
+	  GstBuffer *buffer;
+	  guint size;
+	  GstFlowReturn ret;
+
+#if 1
+
+	gst_app_t *app = &gst_app;
+	GstMapInfo map;
+	gst_buffer_map(buffer,&map,GST_MAP_READ);
+	memcpy(map.data,gFullMat.data,gFullMat.cols*gFullMat.rows*gFullMat.channels());
+	GST_BUFFER_PTS (buffer) = timestamp;
+	GST_BUFFER_DURATION (buffer) = gst_util_uint64_scale_int (1, GST_SECOND, 25);
+	timestamp += GST_BUFFER_DURATION (buffer) ;
+	g_signal_emit_by_name (app->src, "push-buffer", buffer, &ret);
+	gst_buffer_unmap(buffer,&map);
+	gst_buffer_unref (buffer);
+
+#else
+
+  size = 385 * 288 * 2;
+
+  buffer = gst_buffer_new_allocate (NULL, size, NULL);
+
+  /* this makes the image black/white */
+  gst_buffer_memset (buffer, 0, white ? 0xff : 0x0, size);
+
+  white = !white;
+
+  GST_BUFFER_PTS (buffer) = timestamp;
+  GST_BUFFER_DURATION (buffer) = gst_util_uint64_scale_int (1, GST_SECOND, 2);
+
+  timestamp += GST_BUFFER_DURATION (buffer);
+  g_signal_emit_by_name (appsrc, "push-buffer", buffer, &ret);
+  gst_buffer_unref (buffer);
+
+#endif
+
+  if (ret != GST_FLOW_OK) {
+    /* something wrong, stop pushing */
+   // g_main_loop_quit (loop);
+  }
+
+}
+
 
 int gstInit()
 {
+	//OSA_bufCreate(&gBufhandle, OSA_BufCreate *bufInit)
+
 	gst_app_t *app = &gst_app;
 
 	GstStateChangeReturn state_ret;
@@ -74,10 +130,12 @@ int gstInit()
 
 	gst_bin_add_many (GST_BIN(app->pipeline),
 			(GstElement*)app->src,
-			app->filter1,app->convert,
+			//app->filter1,
+			app->convert,
 			app->encoder,app->filter2,
 			app->parser,app->qtmux,
-			app->sink, NULL);
+			app->sink,
+			NULL);
 
 
 	//Set pipeline element attributes
@@ -86,12 +144,14 @@ int gstInit()
 		"format", G_TYPE_STRING, "YUY2",
 		"width", G_TYPE_INT, 1920*2,
 		"height", G_TYPE_INT, 1080,
-		"framerate", GST_TYPE_FRACTION, 30, 1,
+		"framerate", GST_TYPE_FRACTION, 0, 1,
 		NULL);
-	g_object_set (G_OBJECT (app->filter1), "caps", filtercaps1, NULL);
+	g_object_set (G_OBJECT (app->src), "caps", filtercaps1, NULL);
+
+	g_signal_connect (app->src, "need-data", G_CALLBACK (cb_need_data), NULL);
 
 
-	GstCaps *filtercaps2 = gst_caps_new_simple ("video/x-h264",
+	  GstCaps *filtercaps2 = gst_caps_new_simple ("video/x-h264",
 		"stream-format", G_TYPE_STRING, "byte-stream",
 		NULL);
 	g_object_set (G_OBJECT (app->filter2), "caps", filtercaps2, NULL);
@@ -106,7 +166,7 @@ int gstInit()
 	//Link elements together
 	g_assert( gst_element_link_many(
 		(GstElement*)app->src,
-		app->filter1,
+		//app->filter1,
 		app->convert,
 		app->encoder,
 		app->filter2,
