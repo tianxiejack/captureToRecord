@@ -32,6 +32,8 @@ Mat gRightMat;
 
 OSA_SemHndl semRecord;
 
+bool stopInsertBuffer = false;
+
 int callback(void *handle, int chId, int virchId, Mat frame)
 {
 	static unsigned int t;
@@ -39,12 +41,9 @@ int callback(void *handle, int chId, int virchId, Mat frame)
 
 	static bool leftflag = false , rightflag = false;
 
-	frameIndex++;
-
-	if(frameIndex < 60)
-		return 0;
-
 	//printf("time stamp : %u , channelId = %d \n", OSA_getCurTimeInMsec(), chId);
+	if(stopInsertBuffer)
+		return 0;
 
 	if(chId == LEFTCAMERA)
 	{
@@ -64,9 +63,22 @@ int callback(void *handle, int chId, int virchId, Mat frame)
 	if(leftflag && rightflag)
 	{
 		int tmp = 0;
-		printf("send sem !  queneCount = %d \n" ,OSA_bufGetBufcount(&tskfirstQuene , tmp));
+		int bufnum = OSA_bufGetBufcount(&tskfirstQuene , tmp);
+		printf("send sem !  queneCount = %d \n" ,bufnum);
+		if(bufnum > 297)
+		{
+			stopInsertBuffer = true;
+		}
+
 		leftflag = rightflag = false;
-		OSA_semSignal(&semRecord);
+
+		frameIndex++;
+
+		if(frameIndex%3)
+		{
+			OSA_semSignal(&semRecord);
+			frameIndex = 0;
+		}
 	}
 
 	return 0;
@@ -111,9 +123,19 @@ void* recordVideo(void *)
 
 	int bufId;
 	unsigned int tt;
+	int tmp = 0;
+	int bufnum;
 	while(1)
 	{
+		if(stopInsertBuffer)
+		{
+			bufnum = OSA_bufGetBufcount(&tskfirstQuene , tmp);
+			if(bufnum < 3)
+				stopInsertBuffer = false;
+		}
+
 		int ret = OSA_bufGetFull(&tskfirstQuene, &bufId, 100*1000);
+
 		if(ret == -1)
 			continue;
 
