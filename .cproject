@@ -29,8 +29,10 @@
 								<option id="nvcc.compiler.pic.115629357" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic"/>
 								<option id="nvcc.compiler.include.paths.159133360" name="Include paths (-I)" superClass="nvcc.compiler.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="../src"/>
-									<listOptionValue builtIn="false" value="../osa"/>
+									<listOptionValue builtIn="false" value="../osa/inc"/>
+									<listOptionValue builtIn="false" value="../osa/src"/>
 									<listOptionValue builtIn="false" value="/usr/include/GL"/>
+									<listOptionValue builtIn="false" value="/usr/include"/>
 									<listOptionValue builtIn="false" value="/usr/include/opencv"/>
 									<listOptionValue builtIn="false" value="/usr/include/opencv2"/>
 									<listOptionValue builtIn="false" value="/usr/include/gstreamer-1.0"/>
@@ -44,22 +46,24 @@
 							</tool>
 							<tool id="nvcc.linker.base.1845509990" name="NVCC Linker" superClass="nvcc.linker.base">
 								<option id="nvcc.linker.option.libs.835138343" name="Libraries (-l)" superClass="nvcc.linker.option.libs" valueType="libs">
+									<listOptionValue builtIn="false" value="libenc2file"/>
 									<listOptionValue builtIn="false" value="opencv_core"/>
 									<listOptionValue builtIn="false" value="opencv_highgui"/>
 									<listOptionValue builtIn="false" value="opencv_imgproc"/>
 									<listOptionValue builtIn="false" value="opencv_features2d"/>
-									<listOptionValue builtIn="false" value="opencv_imgcodecs"/>
 									<listOptionValue builtIn="false" value="opencv_video"/>
-									<listOptionValue builtIn="false" value="opencv_videoio"/>
 									<listOptionValue builtIn="false" value="opencv_flann"/>
-									<listOptionValue builtIn="false" value="crosa"/>
 									<listOptionValue builtIn="false" value="nppc"/>
 									<listOptionValue builtIn="false" value="cudart"/>
 									<listOptionValue builtIn="false" value="gomp"/>
-									<listOptionValue builtIn="false" value="glfw3"/>
 									<listOptionValue builtIn="false" value="GL"/>
+									<listOptionValue builtIn="false" value="GLEW"/>
 									<listOptionValue builtIn="false" value="visionworks"/>
 									<listOptionValue builtIn="false" value="gstreamer-1.0"/>
+									<listOptionValue builtIn="false" value="gobject-2.0"/>
+									<listOptionValue builtIn="false" value="glib-2.0"/>
+									<listOptionValue builtIn="false" value="gstapp-1.0"/>
+									<listOptionValue builtIn="false" value="pthread"/>
 								</option>
 								<inputType id="nvcc.linker.input.158043004" superClass="nvcc.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -132,14 +136,11 @@
 									<listOptionValue builtIn="false" value="opencv_highgui"/>
 									<listOptionValue builtIn="false" value="opencv_imgproc"/>
 									<listOptionValue builtIn="false" value="opencv_features2d"/>
-									<listOptionValue builtIn="false" value="opencv_imgcodecs"/>
 									<listOptionValue builtIn="false" value="opencv_video"/>
-									<listOptionValue builtIn="false" value="opencv_videoio"/>
 									<listOptionValue builtIn="false" value="opencv_flann"/>
 									<listOptionValue builtIn="false" value="nppc"/>
 									<listOptionValue builtIn="false" value="cudart"/>
 									<listOptionValue builtIn="false" value="gomp"/>
-									<listOptionValue builtIn="false" value="glfw3"/>
 									<listOptionValue builtIn="false" value="GL"/>
 									<listOptionValue builtIn="false" value="GLEW"/>
 									<listOptionValue builtIn="false" value="visionworks"/>
@@ -167,6 +168,7 @@
 					<sass major="6" minor="1"/>
 					<ptx major="6" minor="1"/>
 				</executable>
+				<editor-arch major="6" minor="1"/>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 		</cconfiguration>

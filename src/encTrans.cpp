@@ -12,9 +12,9 @@ void CEncTrans::pushData(Mat img, int chId, int pixFmt)
 	OSA_assert(pixFmt == V4L2_PIX_FMT_YUV420M);
 	//return CRender::display(img, chId, code);
 	//OSA_printf("[CEncTrans]%s %d: ch%d enable%d", __func__, __LINE__, chId, m_enable[chId]);
-	if(m_enable[chId]){
-		gstCapturePushData(m_record_handle[chId],(char *)img.data,img.cols*img.rows*img.channels());
-	}
+
+	gstCapturePushData(m_record_handle[chId],(char *)img.data,img.cols*img.rows*img.channels());
+
 	return ;
 }
 
@@ -36,6 +36,7 @@ static int recordthefile(int dtype, unsigned char *buf, int size)
 
 int CEncTrans::createEncoder(int chId, CAPTURE_SRC srcType, char *ipAddr)
 {
+	printf("enter %s \n" , __func__ );
 	memset(&m_gstCapture_data[chId], 0, sizeof(GstCapture_data));
 	m_gstCapture_data[chId].width = m_initPrm.imgSize[chId].width;
 	m_gstCapture_data[chId].height = m_initPrm.imgSize[chId].height;
@@ -46,7 +47,7 @@ int CEncTrans::createEncoder(int chId, CAPTURE_SRC srcType, char *ipAddr)
 	m_gstCapture_data[chId].capture_src = srcType;
 	//m_gstCapture_data[chId].format = "YUY2";
 	m_gstCapture_data[chId].format = strFormat;//"I420";
-	m_gstCapture_data[chId].ip_addr =ipAddr;
+	m_gstCapture_data[chId].ip_addr =NULL;//ipAddr;
 	m_gstCapture_data[chId].sd_cb= recordthefile;//sync422_ontime_video;
 	for(int i=0;i<ENC_QP_PARAMS_COUNT;i++)
 		m_gstCapture_data[chId].Q_PIB[i]=-1;
@@ -73,7 +74,7 @@ int CEncTrans::init(ENCTRAN_InitPrm *pPrm)
 	if(m_initPrm.nChannels<=0 || m_initPrm.nChannels>ENT_CHN_MAX)
 		m_initPrm.nChannels = 2;
 	m_nChannels = m_initPrm.nChannels;
-
+	printf("m_nChannels = %d \n" , m_nChannels);
 	for(int chId=0; chId<m_nChannels; chId++){
 		if(m_initPrm.encPrm[chId].fps<=0)
 			m_initPrm.encPrm[chId].fps = 30;

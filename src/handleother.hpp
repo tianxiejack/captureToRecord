@@ -13,5 +13,6 @@
 
 int encPrepare();
 int encstop();
+void encTranFrame(const Mat& img);
 
 #endif /* HANDLEOTHER_HPP_ */

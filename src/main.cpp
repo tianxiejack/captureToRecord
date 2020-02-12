@@ -54,6 +54,11 @@ int callback(void *handle, int chId, int virchId, Mat frame)
 		t = OSA_getCurTimeInMsec();
 		frame.copyTo(gLeftMat);
 		//printf("left copy need time : %u \n" , OSA_getCurTimeInMsec() - t);
+
+		rightflag = true;
+		t = OSA_getCurTimeInMsec();
+		frame.copyTo(gRightMat);
+		//printf("right copy need time : %u \n" , OSA_getCurTimeInMsec() - t);
 	}
 	else if(chId == RIGHTCAMERA)
 	{
@@ -67,7 +72,7 @@ int callback(void *handle, int chId, int virchId, Mat frame)
 	{
 		int tmp = 0;
 		int bufnum = OSA_bufGetBufcount(&tskfirstQuene , tmp);
-		printf("send sem !  queneCount = %d \n" ,bufnum);
+		//printf("send sem !  queneCount = %d \n" ,bufnum);
 		if(bufnum > 297)
 		{
 			//stopInsertBuffer = true;
@@ -75,12 +80,12 @@ int callback(void *handle, int chId, int virchId, Mat frame)
 
 		leftflag = rightflag = false;
 
-		frameIndex++;
+		//frameIndex++;
 
-		if(frameIndex%3)
+		//if(frameIndex%3)
 		{
 			OSA_semSignal(&semRecord);
-			frameIndex = 0;
+		//	frameIndex = 0;
 		}
 	}
 
@@ -105,6 +110,10 @@ int pictureCall(int chId,Mat frame)
 		t = OSA_getCurTimeInMsec();
 		frame.copyTo(gLeftMat);
 		//printf("left copy need time : %u \n" , OSA_getCurTimeInMsec() - t);
+
+
+		rightflag = true;
+		frame.copyTo(gRightMat);
 	}
 	else if(chId == RIGHTCAMERA)
 	{
@@ -116,23 +125,16 @@ int pictureCall(int chId,Mat frame)
 
 	if(leftflag && rightflag)
 	{
-		int tmp = 0;
-		int bufnum = OSA_bufGetBufcount(&tskfirstQuene , tmp);
-		printf("%s  send sem !  queneCount = %d \n" ,__func__,bufnum);
-		if(bufnum > 297)
-		{
-			//stopInsertBuffer = true;
-		}
 
 		leftflag = rightflag = false;
 
-		//frameIndex++;
+		frameIndex++;
 
-		//if(frameIndex%2)
-		//{
+		if(frameIndex%10)
+		{
 			OSA_semSignal(&semRecord);
-			//frameIndex = 0;
-		//}
+			frameIndex = 0;
+		}
 	}
 
 	return 0;
@@ -143,16 +145,23 @@ void* colorConvert(void *)
 	int bufId;
 	Mat grayframe;
 	unsigned int tt;
+	static unsigned int frameindex = 0;
 	while(1)
 	{
-		OSA_semWait(&semRecord, 1000*1000);
-		//cvtColor(gFullMat, grayframe, CV_YUV2GRAY_UYVY);
-//		Mat yyy;
-//		cvtColor(gFullMat, yyy, CV_YUV2BGR_YUYV);
-//		imshow("haha",yyy);
-//		waitKey(1);
-//		continue;
 
+		OSA_semWait(&semRecord, 1000*1000);
+		if(frameindex < 100)
+		{
+			cvtColor(gFullMat, grayframe, CV_YUV2GRAY_UYVY);
+			imshow("haha",grayframe);
+			waitKey(1);
+		}
+		else
+			encTranFrame(gFullMat);
+
+		frameindex ++;
+
+#if 0
 		int ret = OSA_bufGetEmpty(&tskfirstQuene, &bufId, 1000*1000);
 		if(ret == -1)
 			continue;
@@ -165,6 +174,8 @@ void* colorConvert(void *)
 #endif
 
 		OSA_bufPutFull(&tskfirstQuene, bufId);
+
+#endif
 	}
 	return NULL;
 }
@@ -223,7 +234,7 @@ int main(int argc,char* argv[])
 
 	encPrepare();
 
-	fisrtQuene.numBuf = 30;
+	fisrtQuene.numBuf = 3;
 	for (int i = 0; i < fisrtQuene.numBuf; i++)
 	{
 		fisrtQuene.bufVirtAddr[i] = (void*)malloc(1920*2*1080*3);
@@ -255,12 +266,12 @@ int main(int argc,char* argv[])
 	//gstInit();
 
 
-#if 0
+#if 1
 	MultiChVideo cap;
 	cap.m_usrFunc = callback;
 	cap.creat();
 	cap.run(LEFTCAMERA);
-	cap.run(RIGHTCAMERA);
+	//cap.run(RIGHTCAMERA);
 
 #else
 
@@ -273,7 +284,7 @@ int main(int argc,char* argv[])
 	while(1)
 	{
 
-#if 0
+#if 1
 		tv.tv_sec = 2;
 		tv.tv_usec = 0;
 		select(0,0,0,0,&tv);

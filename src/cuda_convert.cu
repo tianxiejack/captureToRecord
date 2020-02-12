@@ -1960,11 +1960,11 @@ static cudaError_t cunppConvert_yuv2bgr_yuyv_async(PCUOBJ pObj, const Mat& src, 
 	//npp::ImageCPU_8u_C2 oHostSrc;
 	//npp::ImageNPP_8u_C2 oDeviceSrc(oHostSrc);
 	cudaMemcpy(d_src, src.data, width*2, cudaMemcpyHostToDevice);
-	NppStatus stat = nppiYCbCr422ToBGR_8u_C2C3R(d_src, width*2, d_dst, width*3, oSizeROI);
-	if(stat != NPP_NO_ERROR){
-		OSA_printf("%s: stat = %d", __func__, stat);
-		OSA_assert(stat == NPP_NO_ERROR);
-	}
+//	NppStatus stat = nppiYCbCr422ToBGR_8u_C2C3R(d_src, width*2, d_dst, width*3, oSizeROI);
+//	if(stat != NPP_NO_ERROR){
+//		OSA_printf("%s: stat = %d", __func__, stat);
+//		OSA_assert(stat == NPP_NO_ERROR);
+//	}
 
 	if(dst.data != d_dst)
 	{
