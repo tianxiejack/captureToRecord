@@ -11,10 +11,12 @@
 static gst_app_t gst_app;
 
 using namespace cv;
+using namespace cr_osa;
 
 //OSA_BufHndl gBufhandle;
 
 extern Mat gFullMat;
+extern OSA_BufHndl tskfirstQuene;
 
 void pushData(Mat inFrame)
 {
@@ -51,18 +53,26 @@ void pushData(Mat inFrame)
 
 static void cb_need_data (GstElement *appsrc,guint unused_size,gpointer user_data)
 {
-	  static gboolean white = FALSE;
-	  static GstClockTime timestamp = 0;
-	  GstBuffer *buffer;
-	  guint size;
-	  GstFlowReturn ret;
+	static gboolean white = FALSE;
+	static GstClockTime timestamp = 0;
+	GstBuffer *buffer;
+	guint size;
+	GstFlowReturn ret;
+
+	int bufId;
+	int osaret = OSA_bufGetFull(&tskfirstQuene, &bufId, 100*1000);
+
+	if(osaret == -1)
+		return;
+
+	Mat colorframe = Mat(1080,1920*2,CV_8UC3,tskfirstQuene.bufInfo[bufId].virtAddr);
 
 #if 1
 
 	gst_app_t *app = &gst_app;
 	GstMapInfo map;
 	gst_buffer_map(buffer,&map,GST_MAP_READ);
-	memcpy(map.data,gFullMat.data,gFullMat.cols*gFullMat.rows*gFullMat.channels());
+	memcpy(map.data,colorframe.data,colorframe.cols*colorframe.rows*colorframe.channels());
 	GST_BUFFER_PTS (buffer) = timestamp;
 	GST_BUFFER_DURATION (buffer) = gst_util_uint64_scale_int (1, GST_SECOND, 25);
 	timestamp += GST_BUFFER_DURATION (buffer) ;
@@ -141,7 +151,7 @@ int gstInit()
 	//Set pipeline element attributes
 	g_object_set (app->src, "format", GST_FORMAT_TIME, NULL);
 	GstCaps *filtercaps1 = gst_caps_new_simple ("video/x-raw",
-		"format", G_TYPE_STRING, "YUY2",
+		"format", G_TYPE_STRING, "RGB",//"YUY2",
 		"width", G_TYPE_INT, 1920*2,
 		"height", G_TYPE_INT, 1080,
 		"framerate", GST_TYPE_FRACTION, 0, 1,

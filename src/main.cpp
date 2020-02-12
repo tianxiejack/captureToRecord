@@ -16,6 +16,11 @@
 #include "osa_buf.h"
 
 
+
+#define LEFTCAMERA 0
+#define RIGHTCAMERA 1
+
+
 OSA_BufCreate fisrtQuene;
 OSA_BufHndl tskfirstQuene;
 OSA_BufCreate secondQuene;
@@ -27,14 +32,63 @@ Mat gLeftMat;
 Mat gRightMat;
 
 
-#define LEFTCAMERA 0
-#define RIGHTCAMERA 1
-
 OSA_SemHndl semRecord;
 
 bool stopInsertBuffer = false;
 
+
 int callback(void *handle, int chId, int virchId, Mat frame)
+{
+	static unsigned int t;
+	static unsigned int frameIndex = 0;
+
+	static bool leftflag = false , rightflag = false;
+
+	//printf("time stamp : %u , channelId = %d \n", OSA_getCurTimeInMsec(), chId);
+	//if(stopInsertBuffer)
+	//	return 0;
+
+	if(chId == LEFTCAMERA)
+	{
+		leftflag = true;
+		t = OSA_getCurTimeInMsec();
+		frame.copyTo(gLeftMat);
+		//printf("left copy need time : %u \n" , OSA_getCurTimeInMsec() - t);
+	}
+	else if(chId == RIGHTCAMERA)
+	{
+		rightflag = true;
+		t = OSA_getCurTimeInMsec();
+		frame.copyTo(gRightMat);
+		//printf("right copy need time : %u \n" , OSA_getCurTimeInMsec() - t);
+	}
+
+	if(leftflag && rightflag)
+	{
+		int tmp = 0;
+		int bufnum = OSA_bufGetBufcount(&tskfirstQuene , tmp);
+		printf("send sem !  queneCount = %d \n" ,bufnum);
+		if(bufnum > 297)
+		{
+			//stopInsertBuffer = true;
+		}
+
+		leftflag = rightflag = false;
+
+		frameIndex++;
+
+		if(frameIndex%3)
+		{
+			OSA_semSignal(&semRecord);
+			frameIndex = 0;
+		}
+	}
+
+	return 0;
+}
+
+
+int pictureCall(int chId,Mat frame)
 {
 	static unsigned int t;
 	static unsigned int frameIndex = 0;
@@ -64,26 +118,25 @@ int callback(void *handle, int chId, int virchId, Mat frame)
 	{
 		int tmp = 0;
 		int bufnum = OSA_bufGetBufcount(&tskfirstQuene , tmp);
-		printf("send sem !  queneCount = %d \n" ,bufnum);
+		printf("%s  send sem !  queneCount = %d \n" ,__func__,bufnum);
 		if(bufnum > 297)
 		{
-			stopInsertBuffer = true;
+			//stopInsertBuffer = true;
 		}
 
 		leftflag = rightflag = false;
 
-		frameIndex++;
+		//frameIndex++;
 
-		if(frameIndex%3)
-		{
+		//if(frameIndex%2)
+		//{
 			OSA_semSignal(&semRecord);
-			frameIndex = 0;
-		}
+			//frameIndex = 0;
+		//}
 	}
 
 	return 0;
 }
-
 
 void* colorConvert(void *)
 {
@@ -92,8 +145,7 @@ void* colorConvert(void *)
 	unsigned int tt;
 	while(1)
 	{
-		OSA_semWait(&semRecord, 10*1000);
-
+		OSA_semWait(&semRecord, 1000*1000);
 		//cvtColor(gFullMat, grayframe, CV_YUV2GRAY_UYVY);
 //		Mat yyy;
 //		cvtColor(gFullMat, yyy, CV_YUV2BGR_YUYV);
@@ -101,14 +153,16 @@ void* colorConvert(void *)
 //		waitKey(1);
 //		continue;
 
-		int ret = OSA_bufGetEmpty(&tskfirstQuene, &bufId, 100*1000);
+		int ret = OSA_bufGetEmpty(&tskfirstQuene, &bufId, 1000*1000);
 		if(ret == -1)
 			continue;
 		Mat colorframe = Mat(1080,1920*2,CV_8UC3,tskfirstQuene.bufInfo[bufId].virtAddr);
 
+#if 1
 		tt = OSA_getCurTimeInMsec();
 		cvtColor(gFullMat, colorframe, CV_YUV2BGR_YUYV);
 		printf("cvtColor need time : %u \n" , OSA_getCurTimeInMsec() - tt );
+#endif
 
 		OSA_bufPutFull(&tskfirstQuene, bufId);
 	}
@@ -125,6 +179,9 @@ void* recordVideo(void *)
 	unsigned int tt;
 	int tmp = 0;
 	int bufnum;
+
+	return NULL;
+
 	while(1)
 	{
 		if(stopInsertBuffer)
@@ -144,11 +201,15 @@ void* recordVideo(void *)
 
 		//imshow("111" , colorframe);
 		//waitKey(1);
-		//pushData(gFullMat);
+
+
+		//pushData(colorframe);
+
+#if 0
 		tt = OSA_getCurTimeInMsec();
 		writer.write(colorframe);
 		printf("write frame need time : %u \n" , OSA_getCurTimeInMsec() - tt);
-
+#endif
 		OSA_bufPutEmpty(&tskfirstQuene, bufId);
 	}
 	//writer.release();
@@ -156,11 +217,11 @@ void* recordVideo(void *)
 }
 
 
-int main()
+int main(int argc,char* argv[])
 {
 	struct timeval tv;
 
-	fisrtQuene.numBuf = 299;
+	fisrtQuene.numBuf = 30;
 	for (int i = 0; i < fisrtQuene.numBuf; i++)
 	{
 		fisrtQuene.bufVirtAddr[i] = (void*)malloc(1920*2*1080*3);
@@ -192,21 +253,40 @@ int main()
 	//gstInit();
 
 
-
+#if 0
 	MultiChVideo cap;
 	cap.m_usrFunc = callback;
 	cap.creat();
 	cap.run(LEFTCAMERA);
 	cap.run(RIGHTCAMERA);
 
+#else
+
+	Mat leftpicture = imread("left.jpg");
+	Mat rightpicture = imread("right.jpg");
+
+
+#endif
 
 	while(1)
 	{
 
-
+#if 0
 		tv.tv_sec = 2;
 		tv.tv_usec = 0;
 		select(0,0,0,0,&tv);
+#else
+		tv.tv_sec = 0;
+		tv.tv_usec = 32*1000;
+		select(0,0,0,0,&tv);
+		pictureCall(LEFTCAMERA,leftpicture);
+
+		tv.tv_sec = 0;
+		tv.tv_usec = 1*1000;
+		select(0,0,0,0,&tv);
+		pictureCall(RIGHTCAMERA,rightpicture);
+
+#endif
 	}
 
 	OSA_bufDelete(&tskfirstQuene);
