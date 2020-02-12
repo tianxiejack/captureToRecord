@@ -14,7 +14,7 @@
 #include "osa_sem.h"
 #include "appsrc.h"
 #include "osa_buf.h"
-
+#include "handleother.hpp"
 
 
 #define LEFTCAMERA 0
@@ -221,6 +221,8 @@ int main(int argc,char* argv[])
 {
 	struct timeval tv;
 
+	encPrepare();
+
 	fisrtQuene.numBuf = 30;
 	for (int i = 0; i < fisrtQuene.numBuf; i++)
 	{
@@ -289,8 +291,12 @@ int main(int argc,char* argv[])
 #endif
 	}
 
+
+
 	OSA_bufDelete(&tskfirstQuene);
 //	OSA_bufDelete(&tsksecondQuene);
+
+	encstop();
 
 	return 0;
 }

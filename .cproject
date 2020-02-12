@@ -110,7 +110,8 @@
 								<option id="nvcc.compiler.pic.2072586088" name="Position Independent Code (-fPIC)" superClass="nvcc.compiler.pic"/>
 								<option id="nvcc.compiler.include.paths.274887833" name="Include paths (-I)" superClass="nvcc.compiler.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="../src"/>
-									<listOptionValue builtIn="false" value="../osa"/>
+									<listOptionValue builtIn="false" value="../osa/inc"/>
+									<listOptionValue builtIn="false" value="../osa/src"/>
 									<listOptionValue builtIn="false" value="/usr/include/GL"/>
 									<listOptionValue builtIn="false" value="/usr/include"/>
 									<listOptionValue builtIn="false" value="/usr/include/opencv"/>
@@ -135,7 +136,6 @@
 									<listOptionValue builtIn="false" value="opencv_video"/>
 									<listOptionValue builtIn="false" value="opencv_videoio"/>
 									<listOptionValue builtIn="false" value="opencv_flann"/>
-									<listOptionValue builtIn="false" value="crosa"/>
 									<listOptionValue builtIn="false" value="nppc"/>
 									<listOptionValue builtIn="false" value="cudart"/>
 									<listOptionValue builtIn="false" value="gomp"/>

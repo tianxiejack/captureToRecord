@@ -88,24 +88,19 @@ int CEncTrans::init(ENCTRAN_InitPrm *pPrm)
 	}
 	else
 	{
-//		ret = sync422_spi_create(0,0);// 0 0
 		for(int chId=0; chId<m_nChannels; chId++){
 			createEncoder(chId, m_initPrm.srcType[chId]);
 			m_bufQue[chId] = m_record_handle[chId]->pushQueue;
 			m_bufSem[chId] = m_record_handle[chId]->pushSem;
 			int fps = m_initPrm.encPrm[chId].fps;
-//			ret = sync422_ontime_ctrl(ctrl_prm_framerate, chId, fps); OSA_assert(ret == OSA_SOK);
 		}
 
 		m_curTransLevel = m_initPrm.iTransLevel;
-//		ret = sync422_ontime_ctrl(ctrl_prm_uartrate, 0, m_curTransLevel);OSA_assert(ret == OSA_SOK);
 
 		m_curTransMask = 0;
 		for(int chId=0; chId<m_nChannels; chId++){
 			m_curTransMask |= (m_enable[chId]<<chId);
 		}
-//		ret = sync422_ontime_ctrl(ctrl_prm_chlMask, 0, m_curTransMask);OSA_assert(ret == OSA_SOK);
-		m_bCreateSync422 = true;
 	}
 
 	OSA_mutexLock(&m_mutex);
@@ -135,10 +130,6 @@ int CEncTrans::create()
 	int ret = 0;
 
 	OSA_mutexCreate(&m_mutex);
-	//for(int i=0; i<QUE_CHID_COUNT; i++){
-	//	m_semScheduler[i] = new OSA_SemHndl;
-	//	OSA_semCreate(m_semScheduler[i], 1, 0);
-	//}
 
 	return ret;
 }

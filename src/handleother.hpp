@@ -12,6 +12,6 @@
 
 
 int encPrepare();
-
+int encstop();
 
 #endif /* HANDLEOTHER_HPP_ */

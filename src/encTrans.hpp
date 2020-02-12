@@ -23,7 +23,7 @@ using namespace std;
 using namespace cv;
 
 
-#define ENT_CHN_MAX		(4)
+#define ENT_CHN_MAX		(1)
 
 typedef struct _enctran_enc_param
 {
