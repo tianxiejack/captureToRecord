@@ -8,7 +8,7 @@
 #include "handleother.hpp"
 #include "cuda_convert.cuh"
 #include "osa_sem.h"
-
+#include "appsrc.h"
 
 using namespace std;
 using namespace cv;
@@ -63,7 +63,7 @@ int encPrepare()
 
 	int width = 1920*2;
 	int height = 1080;
-	cudaHostAlloc((void**)&memsI420, width*height*3/2, cudaHostAllocDefault);
+	cudaHostAlloc((void**)&memsI420, width*height*3, cudaHostAllocDefault);
 
 	memset(userEncParamTab0, 0, sizeof(userEncParamTab0));
 	memset(userEncParamTab1, 0, sizeof(userEncParamTab1));
@@ -137,7 +137,7 @@ void encTranFrame(const Mat& img)
 	int zoomflag = 1;
 	cuConvert_async(chId, img, i420, zoomflag);
 
-	enctran->pushData(i420, chId, V4L2_PIX_FMT_YUV420M);
-
+	//enctran->pushData(i420, chId, V4L2_PIX_FMT_YUV420M);
+	pushData(i420);
 }
 

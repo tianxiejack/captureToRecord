@@ -123,8 +123,10 @@
 									<listOptionValue builtIn="false" value="/usr/include/gstreamer-1.0"/>
 									<listOptionValue builtIn="false" value="/usr/lib/aarch64-linux-gnu/gstreamer-1.0/include"/>
 									<listOptionValue builtIn="false" value="/usr/include/glib-2.0"/>
+									<listOptionValue builtIn="false" value="/usr/include/glib-2.0/glib"/>
 									<listOptionValue builtIn="false" value="/usr/lib/aarch64-linux-gnu/glib-2.0/include"/>
 								</option>
+								<option id="nvcc.compiler.cpp11option.1597335107" name="Enable C++11 support (-std=c++11)" superClass="nvcc.compiler.cpp11option" value="true" valueType="boolean"/>
 								<inputType id="nvcc.compiler.input.cu.1313630527" superClass="nvcc.compiler.input.cu"/>
 								<inputType id="nvcc.compiler.input.cpp.1229812334" superClass="nvcc.compiler.input.cpp"/>
 								<inputType id="nvcc.compiler.input.c.81380859" superClass="nvcc.compiler.input.c"/>

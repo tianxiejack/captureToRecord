@@ -80,12 +80,12 @@ int callback(void *handle, int chId, int virchId, Mat frame)
 
 		leftflag = rightflag = false;
 
-		//frameIndex++;
+		frameIndex++;
 
-		//if(frameIndex%3)
+		if(frameIndex%3)
 		{
 			OSA_semSignal(&semRecord);
-		//	frameIndex = 0;
+			frameIndex = 0;
 		}
 	}
 
@@ -150,7 +150,7 @@ void* colorConvert(void *)
 	{
 
 		OSA_semWait(&semRecord, 1000*1000);
-		if(frameindex < 100)
+		if(frameindex < 50)
 		{
 			cvtColor(gFullMat, grayframe, CV_YUV2GRAY_UYVY);
 			imshow("haha",grayframe);
@@ -165,11 +165,12 @@ void* colorConvert(void *)
 		int ret = OSA_bufGetEmpty(&tskfirstQuene, &bufId, 1000*1000);
 		if(ret == -1)
 			continue;
-		Mat colorframe = Mat(1080,1920*2,CV_8UC3,tskfirstQuene.bufInfo[bufId].virtAddr);
+		Mat colorframe = Mat(1080,1920*2,CV_8UC2,tskfirstQuene.bufInfo[bufId].virtAddr);
 
 #if 1
 		tt = OSA_getCurTimeInMsec();
-		cvtColor(gFullMat, colorframe, CV_YUV2BGR_YUYV);
+		//cvtColor(gFullMat, colorframe, CV_YUV2BGR_YUYV);
+		gFullMat.copyTo(colorframe);
 		printf("cvtColor need time : %u \n" , OSA_getCurTimeInMsec() - tt );
 #endif
 
@@ -191,8 +192,6 @@ void* recordVideo(void *)
 	int tmp = 0;
 	int bufnum;
 
-	return NULL;
-
 	while(1)
 	{
 		if(stopInsertBuffer)
@@ -207,7 +206,7 @@ void* recordVideo(void *)
 		if(ret == -1)
 			continue;
 
-		Mat colorframe = Mat(1080,1920*2,CV_8UC3,tskfirstQuene.bufInfo[bufId].virtAddr);
+		Mat colorframe = Mat(1080,1920*2,CV_8UC2,tskfirstQuene.bufInfo[bufId].virtAddr);
 
 
 		//imshow("111" , colorframe);
@@ -233,8 +232,10 @@ int main(int argc,char* argv[])
 	struct timeval tv;
 
 	encPrepare();
+	gstInit();
 
-	fisrtQuene.numBuf = 3;
+
+	fisrtQuene.numBuf = 30;
 	for (int i = 0; i < fisrtQuene.numBuf; i++)
 	{
 		fisrtQuene.bufVirtAddr[i] = (void*)malloc(1920*2*1080*3);
@@ -263,7 +264,7 @@ int main(int argc,char* argv[])
 	gLeftMat = gFullMat(Rect(0,0,1920,1080));
 	gRightMat = gFullMat(Rect(1920,0,1920,1080));
 
-	//gstInit();
+
 
 
 #if 1
@@ -307,7 +308,7 @@ int main(int argc,char* argv[])
 	OSA_bufDelete(&tskfirstQuene);
 //	OSA_bufDelete(&tsksecondQuene);
 
-	encstop();
+	//encstop();
 
 	return 0;
 }

@@ -8,6 +8,8 @@
 
 #include "appsrc.h"
 
+
+#if 0
 static gst_app_t gst_app;
 
 using namespace cv;
@@ -65,7 +67,7 @@ static void cb_need_data (GstElement *appsrc,guint unused_size,gpointer user_dat
 	if(osaret == -1)
 		return;
 
-	Mat colorframe = Mat(1080,1920*2,CV_8UC3,tskfirstQuene.bufInfo[bufId].virtAddr);
+	Mat colorframe = Mat(1080,1920*2,CV_8UC2,tskfirstQuene.bufInfo[bufId].virtAddr);
 
 #if 1
 
@@ -192,3 +194,127 @@ int gstInit()
 
 	return 0;
 }
+
+#else
+
+#include <cstdlib>
+#include <gst/gst.h>
+#include <gst/gstinfo.h>
+#include <gst/app/gstappsrc.h>
+#include <glib-unix.h>
+#include <dlfcn.h>
+
+#include <cstring>
+#include <iostream>
+#include <sstream>
+#include <thread>
+#include "cuda_runtime_api.h"
+#include "gmain.h"
+
+using namespace std;
+
+static GstPipeline *gst_pipeline = nullptr;
+static string launch_string;
+static GstElement *appsrc_;
+
+GstClockTime timestamp = 0;
+static int w = 1920*2;
+static int h = 1080;
+//static void *ptr = nullptr;
+
+void pushData(cv::Mat inFrame)
+{
+	GstBuffer *buffer;
+	guint size;
+	GstFlowReturn ret;
+	GstMapInfo map = {0};
+
+	size = w*h*2/3;
+	buffer = gst_buffer_new_allocate (NULL, size, NULL);
+	buffer->pts = timestamp;
+
+	gst_buffer_map (buffer, &map, GST_MAP_WRITE);
+	//memcpy(map.data, ptr , size);
+	cudaMemcpy(map.data,inFrame.data,size,cudaMemcpyDeviceToHost);
+	gst_buffer_unmap(buffer, &map);
+
+	g_signal_emit_by_name (appsrc_, "push-buffer", buffer, &ret);
+	gst_buffer_unref(buffer);
+
+	timestamp += 33333;
+	return ;
+
+}
+
+
+static gboolean feed_function(gpointer user_data) {
+    GstBuffer *buffer;
+    guint size;
+    GstFlowReturn ret;
+    GstMapInfo map = {0};
+
+    size = (w*h*3)>>1;
+    buffer = gst_buffer_new_allocate (NULL, size, NULL);
+    buffer->pts = timestamp;
+
+    gst_buffer_map (buffer, &map, GST_MAP_WRITE);
+    //memcpy(map.data, ptr , size);
+    gst_buffer_unmap(buffer, &map);
+
+    g_signal_emit_by_name (appsrc_, "push-buffer", buffer, &ret);
+    gst_buffer_unref(buffer);
+
+    timestamp += 33333;
+    return G_SOURCE_CONTINUE;
+}
+
+
+GMainLoop *main_loop;
+int gstInit()
+{
+	gst_init (NULL,NULL);
+
+	main_loop = g_main_loop_new (NULL, FALSE);
+	ostringstream launch_stream;
+
+	launch_stream
+	    << "appsrc name=mysource ! "
+	    << "video/x-raw,width="<< w <<",height="<< h <<",framerate=30/1,format=I420 ! "
+	    << "omxh265enc ! video/x-h265,stream-format=byte-stream ! "
+	    << "filesink location=a.h265 ";
+
+	    launch_string = launch_stream.str();
+
+	    g_print("Using launch string: %s\n", launch_string.c_str());
+
+
+	GError *error = nullptr;
+		gst_pipeline  = (GstPipeline*) gst_parse_launch(launch_string.c_str(), &error);
+
+		if (gst_pipeline == nullptr) {
+			g_print( "Failed to parse launch: %s\n", error->message);
+			return -1;
+		}
+		if(error) g_error_free(error);
+
+
+	appsrc_ = gst_bin_get_by_name(GST_BIN(gst_pipeline), "mysource");
+	gst_app_src_set_stream_type(GST_APP_SRC(appsrc_), GST_APP_STREAM_TYPE_STREAM);
+
+	gst_element_set_state((GstElement*)gst_pipeline, GST_STATE_PLAYING);
+
+}
+
+void gistUninit()
+{
+	gst_element_set_state((GstElement*)gst_pipeline, GST_STATE_NULL);
+	gst_object_unref(GST_OBJECT(gst_pipeline));
+	g_main_loop_unref(main_loop);
+
+	//free(ptr);
+
+	g_print("going to exit \n");
+	return ;
+}
+
+#endif
